@@ -1,177 +1,123 @@
-# ✈️ Travel Agent AI Workflow — n8n Automation
+✈️ AI-Powered Travel Agent – n8n Workflow
+This repository contains an intelligent, fully-automated travel agent workflow built using n8n. It uses OpenAI (Langchain), Google Gemini, SerpAPI, Tavily, and Retell AI to collect user travel preferences, generate travel plans, and initiate voice calls to customers with complete travel itineraries.
 
-This is an **AI-powered Travel Agent** built using **n8n**, OpenAI, LangChain, SerpAPI, Tavily, and Gmail. It automatically receives user travel preferences, searches for flights, resorts, and activities, and then generates and sends a curated travel plan via email.
+🔧 Features
+📋 Collects user travel input via formTrigger
 
----
+🌍 Converts cities to airport codes using Gemini & LangChain
 
-## 📌 Overview
+📆 Validates future travel dates
 
-This workflow handles a POST request with travel data, processes it using AI and APIs, and returns a full travel itinerary via email. It integrates:
+🎯 Searches for:
 
-- **OpenAI GPT-4o** and **Claude 3.5** for NLP
-- **SerpAPI** for Google Flights & Hotels
-- **Tavily** for activity recommendations
-- **Gmail API** to send formatted travel plans via email
+🔍 Activities using Tavily
 
----
+🏨 Hotels using SerpAPI (Google Hotels)
 
-## 🧠 Workflow Logic
+✈️ Flights using SerpAPI (Google Flights)
 
-### 1. **Webhook Trigger**
+🤖 Generates a detailed travel plan summary using Langchain Agent
 
-- **Node:** `Webhook`
-- **Endpoint:** `/travel`
-- **Method:** `POST`
-- **Input Fields:**  
-  - `origin`, `destination`, `departure_date`, `return_date`, `travelers`, `activities`, `email`
+📞 Initiates a real phone call to the customer with the summary using Retell AI
 
----
+🧠 Powered by:
 
-### 2. **Field Assignment**
+Google Gemini via LangChain
 
-- **Node:** `Set Fields`  
-  Extracts and assigns POST body fields to variables for downstream use.
+Structured output parsing for clarity and voice-readability
 
----
+⚙️ Workflow Structure
+📥 Form Input (User Data)
+Triggered via a public form with fields:
 
-### 3. **Airport Code + Date Validation via AI**
+Name
 
-- **Node:** `Airport Codes & Dates`
-- **Uses:** OpenAI GPT-4o
-- **Function:** Converts city names to airport codes & ensures dates are future-valid.
-- **Output Schema:** Validated `{ origin, destination, departure, return }`
+Phone Number
 
----
+Origin & Destination
 
-### 4. **Activity Search**
+Travel Dates
 
-- **Node:** `Activities`
-- **API:** Tavily
-- **Query:** `"activities in {destination}"`
-- **Returns:** Top 3 activity recommendations.
+Traveler Count
 
----
+Activities
 
-### 5. **Hotel Search**
+🔄 Data Flow & Processing
+Step	Node	Function
+1	formTrigger	Accepts user input
+2	Set Fields	Normalizes data
+3	Airport Codes & Dates	Converts cities to IATA codes + validates dates
+4	Activities1	Tavily API to fetch activity ideas
+5	Resorts1	SerpAPI to fetch hotel options
+6	Flights1	SerpAPI to fetch flight options
+7	Travel Plan Generator	Compiles a detailed, structured summary
+8	Retell AI Voice Call	Calls customer with the travel plan
+9	Response1	(Optional) Logs voice call outcome
 
-- **Node:** `Resorts`
-- **API:** SerpAPI (Google Hotels Engine)
-- **Params:** Based on validated destination and dates
-- **Returns:** Resort name, price, image, link, and amenities.
+🧠 Tech Stack
+Tool	Usage
+n8n	Low-code workflow automation
+LangChain	Prompt templates, output parsers
+Google Gemini	Natural language understanding
+Tavily API	Activity suggestions
+SerpAPI	Hotels & Flights
+Retell AI	Voice call with LLM-generated script
+Webhook/FormTrigger	User input interface
 
----
+🔐 Credentials Used
+Set your credentials via n8n's Credentials Manager:
 
-### 6. **Flight Search**
+Google Gemini (via Langchain)
 
-- **Node:** `Flights`
-- **API:** SerpAPI (Google Flights Engine)
-- **Params:** Airport codes and travel dates
-- **Returns:** Top 2 flight options with price, airline, duration, and features.
+Tavily API – httpHeaderAuth
 
----
+SerpAPI – httpQueryAuth
 
-### 7. **Email Drafting via AI Agent**
+Retell AI – httpCustomAuth
 
-- **Node:** `Email Agent`
-- **Prompted With:** Flights, resorts, and activities
-- **LLMs:** Uses both **GPT-4o** and **Claude 3.5**
-- **Output Format:** HTML structured email with sections:
-  - Introduction
-  - Flights
-  - Resorts
-  - Activities
-  - Sign-off
+📦 How to Use
+Clone this repo:
 
----
+bash
+Copy
+Edit
+git clone https://github.com/harshsri873/Travel-agent-n8n.git
+Import the workflow into your n8n instance.
 
-### 8. **Email Output Parsing**
+Set up credentials in n8n:
 
-- **Node:** `Subject & Email`
-- **Schema:** Extracts `{subject, emailBody}` from AI agent output.
+Google Gemini (Palm API)
 
----
+Tavily API
 
-### 9. **Email Delivery**
+SerpAPI
 
-- **Node:** `Send Plan`
-- **Service:** Gmail API
-- **To:** User email
-- **Subject:** Travel itinerary subject
-- **Body:** HTML email with links, images, and activities
+Retell AI (Phone call API)
 
----
+Deploy the formTrigger webhook publicly for input.
 
-### 10. **Webhook Response**
+Submit a form → Get a call!
 
-- **Node:** `Response + Respond to Webhook`
-- **Returns:** Confirmation message back to the sender:
-  ```
-  "An email has been sent with the travel plan for: {subject}"
-  ```
+📄 Example Output
+Fully structured trip summary
 
----
+Suggested flights with times & pricing
 
-## 🗂 Input Example (POST Body)
+Hotel names with amenities
 
-```json
-{
-  "origin": "Delhi",
-  "destination": "Paris",
-  "departure_date": "2025-08-10",
-  "return_date": "2025-08-20",
-  "travelers": 2,
-  "activities": "romantic dinner, museum, river cruise",
-  "email": "user@example.com"
-}
-```
+Local activities based on user interests
 
----
+Sent via Retell AI Voice Call
 
-## 🧰 Tech Stack
+📞 Voice Agent Sample Prompt
+“Hi there! This is TrueHorizon, your personal travel assistant. I’m calling with your requested vacation plan…”
 
-| Tool | Purpose |
-|------|---------|
-| **n8n** | Automation platform |
-| **OpenAI (GPT-4o)** | Natural Language Processing |
-| **Claude 3.5** | Alternative AI model |
-| **SerpAPI** | Flights and Hotels data |
-| **Tavily** | Curated activity search |
-| **Gmail API** | Email delivery |
+✨ Future Improvements
+Add multilingual support
 
----
+Improve date/time formatting with user locale
 
-## 📬 Output Sample
+Integrate Google Calendar event creation
 
-A fully formatted HTML email with:
+Store trip plans in a Notion/Google Sheet backend
 
-- 🛫 **Flight options** (airline, time, duration, price)
-- 🏨 **Top resorts** (images, pricing, nearby places)
-- 🎯 **Activities** (with clickable links and summaries)
-
----
-
-## ✅ Use Case
-
-This automation is ideal for:
-
-- Travel agencies
-- AI personal assistant products
-- Conversational IVRs (integrated with voice/webchat)
-- Concierge services
-
----
-
-## 🧪 Tips for Testing
-
-- Use Postman or any HTTP client to test `POST` at:
-  ```
-  http://<n8n-instance>/webhook/travel
-  ```
-- Ensure all credentials (Gmail, OpenAI, SerpAPI, Tavily) are set in n8n.
-- Use sandbox/testing email during development.
-
----
-
-## ✨ Credits
-
-Built by **TrueHorizon AI Team** using LLMs + automation — making travel simpler, smarter, and more magical ✨
